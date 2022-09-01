@@ -104,10 +104,14 @@ jobs:
           filters: |
             openapi:
               - 'openapi/*.yaml'
+      - name: Show initial max_connections value
+        run: docker exec -i kas-fleet-manager-db /bin/bash docker-entrypoint.sh psql -U kas_fleet_manager -d serviceapitests -c 'show max_connections;'
       - name: Increase Postgres max_connections limit
         run: docker exec -i kas-fleet-manager-db /bin/bash docker-entrypoint.sh psql -U kas_fleet_manager -d serviceapitests -c 'alter system set max_connections=200;'
       - name: Restart Postgres container
         run: docker restart --time 0 kas-fleet-manager-db
+      - name: Show max_connections after new configuration has been applied
+        run: docker exec -i kas-fleet-manager-db /bin/bash docker-entrypoint.sh psql -U kas_fleet_manager -d serviceapitests -c 'show max_connections;'
       - name: Setup Keycloak realm config
         run: make sso/config
       - name: Cache go module
