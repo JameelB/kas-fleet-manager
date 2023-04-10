@@ -51,7 +51,7 @@ type AutomaticCertificateManagementConfig struct {
 
 func NewCertificateManagementConfig() *KafkaTLSCertificateManagementConfig {
 	return &KafkaTLSCertificateManagementConfig{
-		CertificateAuthorityEndpoint:   certmagic.LetsEncryptProductionCA,
+		CertificateAuthorityEndpoint:   certmagic.LetsEncryptStagingCA,
 		StorageType:                    InMemoryTLSCertStorageType,
 		EnableKafkaExternalCertificate: false,
 		ManualCertificateManagementConfig: ManualCertificateManagementConfig{
