@@ -757,32 +757,37 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		)
 	}
 
-	r = append(r, c.buildObservabilityNamespaceResource())
+	if c.ObservabilityConfiguration.EnableObservabilityOperatorInstallation {
+		r = append(r, c.buildObservabilityNamespaceResource())
 
-	if c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled {
-		if cluster.ClusterType == api.EnterpriseDataPlaneClusterType.String() {
+		if c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled {
+			if cluster.ClusterType == api.EnterpriseDataPlaneClusterType.String() {
+				r = append(r,
+					c.buildObservabilityEnterpriseCloudwatchLoggingCredentialsSecret(cluster.OrganizationID, cluster.ClusterID),
+				)
+			} else {
+				r = append(r,
+					c.buildObservabilityCloudwatchLoggingCredentialsSecret(),
+				)
+			}
+		}
+
+		r = append(r,
+			c.buildObservatoriumSSOSecretResource(),
+			c.buildObservabilityCatalogSourceResource(),
+			c.buildObservabilityOperatorGroupResource(),
+			c.buildObservabilitySubscriptionResource(),
+		)
+
+		// if no static oidc configuration is provided, or if it is disabled, use the data plane service account
+		if !c.ObservabilityConfiguration.DataPlaneObservabilityConfig.Enabled || !c.ObservabilityConfiguration.DataPlaneObservabilityConfig.HasStaticOIDCConfiguration() {
 			r = append(r,
-				c.buildObservabilityEnterpriseCloudwatchLoggingCredentialsSecret(cluster.OrganizationID, cluster.ClusterID),
-			)
-		} else {
-			r = append(r,
-				c.buildObservabilityCloudwatchLoggingCredentialsSecret(),
+				c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
 			)
 		}
-	}
-
-	r = append(r,
-		c.buildObservatoriumSSOSecretResource(),
-		c.buildObservabilityCatalogSourceResource(),
-		c.buildObservabilityOperatorGroupResource(),
-		c.buildObservabilitySubscriptionResource(),
-	)
-
-	// if no static oidc configuration is provided, or if it is disabled, use the data plane service account
-	if !c.ObservabilityConfiguration.DataPlaneObservabilityConfig.Enabled || !c.ObservabilityConfiguration.DataPlaneObservabilityConfig.HasStaticOIDCConfiguration() {
-		r = append(r,
-			c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
-		)
+		if s := c.buildImagePullSecret(observabilityNamespace); s != nil {
+			r = append(r, s)
+		}
 	}
 
 	strimziNamespace := strimziAddonNamespace
@@ -823,9 +828,6 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		r = append(r, s)
 	}
 	if s := c.buildImagePullSecret(kasFleetshardNamespace); s != nil {
-		r = append(r, s)
-	}
-	if s := c.buildImagePullSecret(observabilityNamespace); s != nil {
 		r = append(r, s)
 	}
 	return types.ResourceSet{

@@ -588,6 +588,11 @@ parameters:
   description: Prefix to use for all secret names in AWS secret manager
   value: kas-fleet-manager
 
+- name: ENABLE_OBSERVABILITY_OPERATOR_INSTALLATION
+  description: Enables installation of observability operator
+  value: "true"
+
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -1145,6 +1150,7 @@ objects:
             - --aws-secret-manager-secret-access-key-file=/secrets/aws-secret-manager/aws_secret_access_key
             - --aws-secret-manager-region=${AWS_SECRET_MANAGER_REGION}
             - --aws-secret-manager-secret-prefix=${AWS_SECRET_MANAGER_SECRET_PREFIX}
+            - --enable-observability-operator-installation=${ENABLE_OBSERVABILITY_OPERATOR_INSTALLATION}
             - -v=${GLOG_V}
             resources:
               requests:

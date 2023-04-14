@@ -38,8 +38,9 @@ type ObservabilityConfiguration struct {
 	ObservabilityConfigChannel string `json:"observability_config_channel"`
 
 	// Configuration of AWS CloudWatch Logging for Observability
-	ObservabilityCloudWatchLoggingConfig ObservabilityCloudWatchLoggingConfig
-	DataPlaneObservabilityConfig         DataPlaneObservabilityConfig
+	ObservabilityCloudWatchLoggingConfig    ObservabilityCloudWatchLoggingConfig
+	DataPlaneObservabilityConfig            DataPlaneObservabilityConfig
+	EnableObservabilityOperatorInstallation bool
 }
 
 var _ environments.ConfigModule = &ObservabilityConfiguration{}
@@ -226,14 +227,15 @@ type ObservabilityEnterpriseCloudwatchLoggingConfigCredentials struct {
 
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	return &ObservabilityConfiguration{
-		Timeout:                    240 * time.Second,
-		EnableMock:                 false,
-		Insecure:                   true, // TODO: false
-		ObservabilityConfigRepo:    "quay.io/rhoas/observability-resources-mk",
-		ObservabilityConfigChannel: "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
-		ObservabilityConfigTag:     "latest",
-		RedHatSsoTenant:            "",
-		RedHatSsoTokenRefresherUrl: "",
+		Timeout:                                 240 * time.Second,
+		EnableMock:                              false,
+		Insecure:                                true, // TODO: false
+		ObservabilityConfigRepo:                 "quay.io/rhoas/observability-resources-mk",
+		ObservabilityConfigChannel:              "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
+		ObservabilityConfigTag:                  "latest",
+		RedHatSsoTenant:                         "",
+		RedHatSsoTokenRefresherUrl:              "",
+		EnableObservabilityOperatorInstallation: true,
 	}
 }
 
@@ -254,6 +256,7 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 
 	fs.StringVar(&c.DataPlaneObservabilityConfig.configFilePath, "dataplane-observability-config-file-path", "secrets/dataplane-observability-config.yaml", "Path to a file containing the configuration for data plane observability, including remote write. If provided, data plane will send metrics to the provided remote write receiver.")
 	fs.BoolVar(&c.DataPlaneObservabilityConfig.Enabled, "dataplane-observability-config-enable", false, "Enable sending metrics to the remote write receiver which is configured in the file referenced from --dataplane-observability-config-file-path")
+	fs.BoolVar(&c.EnableObservabilityOperatorInstallation, "enable-observability-operator-installation", true, "enables installation of observability operator")
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {
